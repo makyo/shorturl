@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Short URL!</title>
+    <style>
+    @import url('https://fonts.googleapis.com/css?family=Lato');
+    body {
+        background-color: #eee;
+        color: #222;
+        text-align: center;
+        font-family: "Lato", sans-serif;
+    }
+    div {
+        padding: 1em;
+        margin: 0;
+    }
+    .wrapper {
+        max-width: 969px;
+        margin: 0 auto;
+    }
+    form {
+        border: 2px solid #ddd;
+        border-radius: 3px;
+        background-color: #fff;
+    }
+    code {
+        border: 1px solid #ddd;
+        background-color: #eee;
+    }
+    input[type=text] {
+        margin-top: 1em;
+        border: 1px solid #ccc;
+        padding: 2px;
+    }
+    button {
+        padding: 1em;
+        background-color: #cfc;
+        border: 2px solid #aca;
+        border-radius: 3px;
+    }
+    .messages div {
+        border: 2px solid transparent;
+
+    }
+    .success {
+        background-color: #cfc;
+        border-color: #aca;
+    }
+    .error {
+        background-color: #fcc;
+        border-color: #caa;
+    }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <h1>Short URL</h1>
+        {% if get_flashed_messages() %}
+        <div class="messages">
+            {% for message in get_flashed_messages(with_categories=True) %}
+            <div class="{{ message[0] }}">{{ message[1]|safe }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <input type="hidden" name="hp" />
+            <p><label for="destination">Destination:</label><br /><input type="text" name="destination" id="destination" placeholder="Destination" />
+            <p><label for="custom">Custom shorturl <input type="checkbox" id="custom" name="custom" /></label></p>
+            <p><label for="custom_path">Custom path:</label><br /><input type="text" name="custom_path" id="custom_path" placeholder="Custom Path" /></p>
+            <p><label for="reality_check">Type the following and make the first word ALL CAPS:<br /><code>{{ ' '.join(rw) }}</code></label><br /><input type="text" name="reality_check" id="reality_check" placeholder="Reality Check" /></p>
+            <p><button type="submit">Create</button></p>
+        </form>
+    </div>
+</body>
