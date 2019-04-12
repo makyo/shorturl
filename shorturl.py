@@ -67,13 +67,40 @@ def front():
                 ''', (source,result.lastrowid))
                 db.commit()
                 flash('''
-                Your domain is <a href="{base}{path}"">{base}{path}</a>'''.format(base=request.base_url, path=source),
+                Your domain is <a href="{base}{path}"">{base}{path}</a>'''.format(base=app.config['BASE'], path=source),
                       category='success')
     session['csrf_token'] = hashlib.sha1(os.urandom(40)).hexdigest()
     session['rw'] = RandomWords().random_words(count=3)
     return render_template('front.html',
                            csrf_token=session['csrf_token'],
                            rw=session['rw'])
+
+@app.route('/api')
+def api():
+    db = sqlite3.connect('shorturls.db')
+    api_success = db.execute('select count(*) from apikeys where key = ?',
+                             (request.args.get('key'),)).fetchone()[0]
+    if api_success != 0:
+        # Create a short URL without a source
+        cur = db.cursor()
+        result = cur.execute('''
+        insert into shorturls (destination) values (?)
+        ''', (request.args.get('destination'),))
+        db.commit()
+
+        # Set source to id if no source was given
+        source = gmpy2.digits(result.lastrowid, 62)
+        cur.execute('''
+        update shorturls set shorturl = ? where id = ?
+        ''', (source,result.lastrowid))
+        db.commit()
+        flash('''
+        Your domain is <a href="{base}{path}">{base}{path}</a>'''.format(base=app.config['BASE'], path=source),
+              category='success')
+    else:
+        flash('Invalid API key', category='error')
+    return redirect('/')
+
 
 @app.route('/<shorturl>')
 def serve(shorturl):
