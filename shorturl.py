@@ -67,13 +67,53 @@ def front():
                 ''', (source,result.lastrowid))
                 db.commit()
                 flash('''
-                Your domain is <a href="{base}{path}"">{base}{path}</a>'''.format(base=request.base_url, path=source),
+                Your domain is <a href="{base}{path}"">{base}{path}</a>'''.format(base=app.config['BASE'], path=source),
                       category='success')
     session['csrf_token'] = hashlib.sha1(os.urandom(40)).hexdigest()
     session['rw'] = RandomWords().random_words(count=3)
     return render_template('front.html',
                            csrf_token=session['csrf_token'],
                            rw=session['rw'])
+
+@app.route('/api')
+def api():
+    db = sqlite3.connect('shorturls.db')
+    key = request.args.get('key')
+
+    # If there's no key, it's probably just the short URL /api
+    if key is None:
+        result = db.execute('select destination from shorturls where shorturl = ?',
+                            ('api',)).fetchone()
+
+        # If it doesn't exist, abort; otherwise, redirect
+        if result is None:
+            abort(404)
+        return redirect(result[0])
+
+    # Otherwise it's probably an API request
+    api_success = db.execute('select count(*) from apikeys where key = ?',
+                             (key,)).fetchone()[0]
+    if api_success != 0:
+        # Create a short URL without a source
+        cur = db.cursor()
+        result = cur.execute('''
+        insert into shorturls (destination) values (?)
+        ''', (request.args.get('destination'),))
+        db.commit()
+
+        # Set source to id if no source was given
+        source = gmpy2.digits(result.lastrowid, 62)
+        cur.execute('''
+        update shorturls set shorturl = ? where id = ?
+        ''', (source,result.lastrowid))
+        db.commit()
+        flash('''
+        Your domain is <a href="{base}{path}">{base}{path}</a>'''.format(base=app.config['BASE'], path=source),
+              category='success')
+    else:
+        flash('Invalid API key', category='error')
+    return redirect('/')
+
 
 @app.route('/<shorturl>')
 def serve(shorturl):
