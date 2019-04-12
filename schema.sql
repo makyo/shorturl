@@ -7,6 +7,3 @@ create table if not exists shorturls (
 create table if not exists apikeys (
     key text not null
 );
-
--- /api is reserved
-insert into shorturls (shorturl) values ('api');

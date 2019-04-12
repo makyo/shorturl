@@ -78,8 +78,21 @@ def front():
 @app.route('/api')
 def api():
     db = sqlite3.connect('shorturls.db')
+    key = request.args.get('key')
+
+    # If there's no key, it's probably just the short URL /api
+    if key is None:
+        result = db.execute('select destination from shorturls where shorturl = ?',
+                            ('api',)).fetchone()
+
+        # If it doesn't exist, abort; otherwise, redirect
+        if result is None:
+            abort(404)
+        return redirect(result[0])
+
+    # Otherwise it's probably an API request
     api_success = db.execute('select count(*) from apikeys where key = ?',
-                             (request.args.get('key'),)).fetchone()[0]
+                             (key,)).fetchone()[0]
     if api_success != 0:
         # Create a short URL without a source
         cur = db.cursor()
